@@ -6,7 +6,9 @@ from threading import Thread
 from Queue import Queue, Empty
 import os
 import struct
+import urllib2
 
+SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s'
 CMD_MFCC = '/usr/local/bin/x2x +sf | /usr/local/bin/frame | /usr/local/bin/mfcc'
 CMD_ENROLL = '/usr/local/bin/gmm -l 12'
 CMD_PREDICT = '/usr/local/bin/gmmp -a -l 12 %s'
@@ -73,6 +75,8 @@ def process_predict():
 #    i = i + 1
 def find_best_gmm_match(mfcc_data):
     gmm_result_queue = Queue()
+    best_match_name = 'none'
+    best_match_logp = float('-inf')
     for filename in os.listdir(DIR_GMM):
         if not filename.endswith('.gmm'):
             continue
@@ -87,6 +91,15 @@ def find_best_gmm_match(mfcc_data):
         print(filename)
         ave_logp = struct.unpack('f', result)[0]
         print(ave_logp)
+        if ave_logp > best_match_logp:
+            best_match_logp = ave_logp
+            best_match_name = os.path.splitext(filename)[0]
+    result_thread = Thread(target=send_result, args=[best_match_name])
+    result_thread.start()
+
+def send_result(name):
+    request_url = SPEECH_ADD_URL % name
+    response_json = urllib2.urlopen(request_url)
 
 def get_mfcc_result(out,result_queue):
     buf = out.read()
