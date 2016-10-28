@@ -7,7 +7,7 @@ import sys
 
 def voice_capture(inrate, v_queue):
 
-    inrate=int(8000);
+    #inrate=int(8000);
     rate_str="-r"+str(inrate)
     
     record_proc = subprocess.Popen(["arecord","-fS16_LE",rate_str,"-c1","-traw"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -19,7 +19,7 @@ def voice_capture(inrate, v_queue):
     amp=numpy.zeros((rate,))          #rate
     th=numpy.zeros((rate,))           #rate
     
-    f=open('testpy.raw','wb')
+    #f=open('testpy.raw','wb')
     #f.write(record_proc.stdout.read(1))
     while 1:
         for i in range(0,rate-1):                   #rate
