@@ -31,3 +31,10 @@
 # Debug files
 *.dSYM/
 *.su
+
+# Undo file
+*.un~
+
+# Python
+__pycache__
+*.pyc
