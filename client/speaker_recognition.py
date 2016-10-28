@@ -13,7 +13,7 @@ SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s'
 CMD_MFCC = '/usr/local/bin/x2x +sf | /usr/local/bin/frame | /usr/local/bin/mfcc -s %d' % RECORD_KHZ
 CMD_ENROLL = '/usr/local/bin/gmm -l 12'
 CMD_PREDICT = '/usr/local/bin/gmmp -a -l 12 %s'
-DIR_GMM = '/home/root/speakerdata/'
+DIR_GMM = '/home/root/.speakerdata/'
 
 INPUT_BUF_SIZE = RECORD_KHZ * 1000 * 16 / 8 # 8kHz 16 bit
 MFCC_BUF_SIZE = 32
