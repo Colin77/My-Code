@@ -8,13 +8,14 @@ import os
 import struct
 import urllib2
 
+RECORD_KHZ = 8
 SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s'
-CMD_MFCC = '/usr/local/bin/x2x +sf | /usr/local/bin/frame | /usr/local/bin/mfcc'
+CMD_MFCC = '/usr/local/bin/x2x +sf | /usr/local/bin/frame | /usr/local/bin/mfcc -s %d' % RECORD_KHZ
 CMD_ENROLL = '/usr/local/bin/gmm -l 12'
 CMD_PREDICT = '/usr/local/bin/gmmp -a -l 12 %s'
 DIR_GMM = '/home/root/speakerdata/'
 
-INPUT_BUF_SIZE = 16 * 1000 * 16 / 8 # 16kHz 16 bit
+INPUT_BUF_SIZE = RECORD_KHZ * 1000 * 16 / 8 # 8kHz 16 bit
 MFCC_BUF_SIZE = 32
 
 def main():
@@ -68,11 +69,10 @@ def process_predict():
             p.stdin.close()
             p.wait()
             mfcc_data = mfcc_result_queue.get()
-            find_best_gmm_match(mfcc_data)
-#  i = 0
-#  for c in mfcc_data:
-#    print('%d:%s' % (i, hex(ord(c))))
-#    i = i + 1
+            best_match_name = find_best_gmm_match(mfcc_data)
+            result_thread = Thread(target=send_result, args=[best_match_name])
+            result_thread.start()
+
 def find_best_gmm_match(mfcc_data):
     gmm_result_queue = Queue()
     best_match_name = 'none'
@@ -94,8 +94,7 @@ def find_best_gmm_match(mfcc_data):
         if ave_logp > best_match_logp:
             best_match_logp = ave_logp
             best_match_name = os.path.splitext(filename)[0]
-    result_thread = Thread(target=send_result, args=[best_match_name])
-    result_thread.start()
+    return best_match_name
 
 def send_result(name):
     request_url = SPEECH_ADD_URL % name
