@@ -9,15 +9,17 @@ import struct
 import urllib2
 import subrecord
 import math
+import time
 
-RECORD_KHZ = 8
+RECORD_KHZ = 8 #kHZ
+INTERVAL = 1000 #mili
 SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s'
 CMD_MFCC = '/usr/local/bin/x2x +sf | /usr/local/bin/frame | /usr/local/bin/mfcc -s %d' % RECORD_KHZ
 CMD_ENROLL = '/usr/local/bin/gmm -l 12'
 CMD_PREDICT = '/usr/local/bin/gmmp -a -l 12 %s'
 DIR_GMM = '/home/root/.speakerdata/'
 
-INPUT_BUF_SIZE = RECORD_KHZ * 1000 * 16 / 8 # 8kHz 16 bit
+INPUT_BUF_SIZE = (INTERVAL / 1000 ) * RECORD_KHZ * 1000 * 16 / 8 # 16 bit
 MFCC_BUF_SIZE = 32
 
 def main():
@@ -83,13 +85,11 @@ def process_predict_live():
     voice_data_queue = Queue()
     voice_capture_thread = Thread(target=subrecord.voice_capture, args=[math.floor(RECORD_KHZ * 1000), INPUT_BUF_SIZE, voice_data_queue])
     voice_capture_thread.start()
+    sample = 0;
+    start_time = int(time.time())
     while True:
         buf = voice_data_queue.get()
         n = len(buf)
-        if n < INPUT_BUF_SIZE:
-            print('short')
-        else:
-            print('full')
         p = subprocess.Popen([CMD_MFCC], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         mfcc_thread = Thread(target=get_mfcc_result, args=[p.stdout, mfcc_result_queue])
         mfcc_thread.start()
@@ -100,6 +100,9 @@ def process_predict_live():
         best_match_name = find_best_gmm_match(mfcc_data)
         result_thread = Thread(target=send_result, args=[best_match_name])
         result_thread.start()
+        sample += 1
+        print('Sample: %d\tDuration: %d\tQueueLength: %d\tSampleLength: %s\tspeaker: %s' %
+                (sample, int(time.time()) - start_time, voice_data_queue.qsize(), n, best_match_name))
 
 def find_best_gmm_match(mfcc_data):
     gmm_result_queue = Queue()
@@ -116,9 +119,9 @@ def find_best_gmm_match(mfcc_data):
         p_gmm.stdin.close()
         p_gmm.wait()
         result = gmm_result_queue.get()
-        print(filename)
+        #print(filename)
         ave_logp = struct.unpack('f', result)[0]
-        print(ave_logp)
+        #print(ave_logp)
         if ave_logp > best_match_logp:
             best_match_logp = ave_logp
             best_match_name = os.path.splitext(filename)[0]
