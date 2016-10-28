@@ -88,7 +88,7 @@ def process_predict_live():
         n = 0;
         while True:
             data = voice_data_queue.get()
-            if data == 'END':
+            if len(data) >= 3:
                 break;
             buf[n] = data[0];
             buf[n + 1] = data[1];
