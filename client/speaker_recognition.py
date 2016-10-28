@@ -7,6 +7,8 @@ from Queue import Queue, Empty
 import os
 import struct
 import urllib2
+import subrecord
+import math
 
 RECORD_KHZ = 8
 SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s'
@@ -20,12 +22,15 @@ MFCC_BUF_SIZE = 32
 
 def main():
     if len(sys.argv) < 3 or ( sys.argv[1] != 'enroll' and sys.argv[1] != 'predict' ):
-        print('Usage: ' + sys.argv[0] + ' enroll|predict file.raw')
+        print('Usage: ' + sys.argv[0] + ' enroll|predict file.raw|live')
         sys.exit(0)
     if sys.argv[1] == 'enroll':
         process_enroll()
     if sys.argv[1] == 'predict':
-        process_predict()
+        if sys.argv[2] == 'live':
+            process_predict_live()
+        else:
+            process_predict()
 
 def process_enroll():
     name = raw_input('Name: ')
@@ -72,6 +77,29 @@ def process_predict():
             best_match_name = find_best_gmm_match(mfcc_data)
             result_thread = Thread(target=send_result, args=[best_match_name])
             result_thread.start()
+
+def process_predict_live():
+    mfcc_result_queue = Queue()
+    voice_data_queue = Queue()
+    voice_capture_thread = Thread(target=subrecord.voice_capture, args=[math.floor(RECORD_KHZ * 1000), INPUT_BUF_SIZE, voice_data_queue])
+    voice_capture_thread.start()
+    while True:
+        buf = voice_data_queue.get()
+        n = len(buf)
+        if n < INPUT_BUF_SIZE:
+            print('short')
+        else:
+            print('full')
+        p = subprocess.Popen([CMD_MFCC], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        mfcc_thread = Thread(target=get_mfcc_result, args=[p.stdout, mfcc_result_queue])
+        mfcc_thread.start()
+        p.stdin.write(buf)
+        p.stdin.close()
+        p.wait()
+        mfcc_data = mfcc_result_queue.get()
+        best_match_name = find_best_gmm_match(mfcc_data)
+        result_thread = Thread(target=send_result, args=[best_match_name])
+        result_thread.start()
 
 def find_best_gmm_match(mfcc_data):
     gmm_result_queue = Queue()

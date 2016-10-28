@@ -38,3 +38,4 @@
 # Python
 __pycache__
 *.pyc
+*.raw
