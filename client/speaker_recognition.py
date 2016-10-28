@@ -28,7 +28,7 @@ def main():
         process_enroll()
     if sys.argv[1] == 'predict':
         if sys.argv[2] == 'live':
-            provess_predice_live()
+            process_predict_live()
         else:
             process_predict()
 
@@ -93,7 +93,7 @@ def process_predict_live():
             buf[n] = data[0];
             buf[n + 1] = data[1];
             n += 2;
-            if bufid >= INPUT_BUF_SIZE:
+            if n >= INPUT_BUF_SIZE:
                 break;
         p = subprocess.Popen([CMD_MFCC], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         mfcc_thread = Thread(target=get_mfcc_result, args=[p.stdout, mfcc_result_queue])
