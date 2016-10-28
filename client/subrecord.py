@@ -7,11 +7,11 @@ import sys
 import Queue
 import io
 
-def voice_capture(inrate, v_queue):
+def voice_capture(inrate, bufsize,  v_queue):
 
     inrate=int(8000);
     rate_str="-r"+str(inrate)
-    byte_buffer=bytearray(16000)
+    byte_buffer=bytearray(bufsize)
     j=0
     record_proc = subprocess.Popen(["arecord","-fS16_LE",rate_str,"-c1","-traw"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     
@@ -22,7 +22,7 @@ def voice_capture(inrate, v_queue):
     amp=numpy.zeros((rate,))          #rate
     th=numpy.zeros((rate,))           #rate
     
-    f=open('testpy.raw','wb')
+    #f=open('testpy.raw','wb')
     #f.write(record_proc.stdout.read(1))
     while 1:
         for i in range(0,rate-1):                   #rate
@@ -57,7 +57,7 @@ def voice_capture(inrate, v_queue):
                         byte_buffer[j]=data[0]    #v_queue.write(data) #v_queue.put(data)           #f.write(data)
                         byte_buffer[j+1]=data[1]
                         j=j+2
-                        if (j>=16000):
+                        if (j>=bufsize):
                             j=0
                             v_queue.put(byte_buffer)
                         a= ord(data[0])+ord(data[1])*256
@@ -72,8 +72,8 @@ def voice_capture(inrate, v_queue):
                     else:
                         silent=0
                 print('ends','noise:',noise,';th:',th.mean())
-                j=0
-                v_queue.put('END')
+                v_queue.put(byte_buffer[:j])
+                j = 0
                 break
             else:
                 break

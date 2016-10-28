@@ -81,27 +81,19 @@ def process_predict():
 def process_predict_live():
     mfcc_result_queue = Queue()
     voice_data_queue = Queue()
-    buf = bytearray(INPUT_BUF_SIZE)
-    voice_capture_thread = Thread(target=subrecord.voice_capture, args=[math.floor(RECORD_KHZ * 1000), voice_data_queue])
+    voice_capture_thread = Thread(target=subrecord.voice_capture, args=[math.floor(RECORD_KHZ * 1000), INPUT_BUF_SIZE, voice_data_queue])
     voice_capture_thread.start()
     while True:
-        n = 0;
-        while True:
-            data = voice_data_queue.get()
-            if len(data) >= 3:
-                break;
-            buf[n] = data[0];
-            buf[n + 1] = data[1];
-            n += 2;
-            if n >= INPUT_BUF_SIZE:
-                break;
+        buf = voice_data_queue.get()
+        n = len(buf)
+        if n < INPUT_BUF_SIZE:
+            print('short')
+        else:
+            print('full')
         p = subprocess.Popen([CMD_MFCC], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         mfcc_thread = Thread(target=get_mfcc_result, args=[p.stdout, mfcc_result_queue])
         mfcc_thread.start()
-        if n < len(buf):
-            p.stdin.write(buf[:n])
-        else:
-            p.stdin.write(buf)
+        p.stdin.write(buf)
         p.stdin.close()
         p.wait()
         mfcc_data = mfcc_result_queue.get()
