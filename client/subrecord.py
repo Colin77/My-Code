@@ -13,67 +13,60 @@ def voice_capture(inrate, bufsize,  v_queue):
     rate_str="-r"+str(inrate)
     byte_buffer=bytearray(bufsize)
     j=0
+    
     record_proc = subprocess.Popen(["arecord","-fS16_LE",rate_str,"-c1","-traw"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     
     rate=int(inrate/100)
-    
+    noise=80
     open_factor=2.5
-
-    amp=numpy.zeros((rate,))          #rate
-    th=numpy.zeros((rate,))           #rate
+    gaussain_filter=[0.006,0.061,0.242,0.383,0.242,0.061,0.006]
+    amp=numpy.zeros((rate,))
     
-    #f=open('testpy.raw','wb')
-    #f.write(record_proc.stdout.read(1))
+    for i in range(0,rate-1):
+        data=record_proc.stdout.read(2)
+        a=ord(data[0])+ord(data[1])*256
+        if a>32767:
+            a=a-65536
+        amp[i]=a
+    amp=numpy.abs(amp)
+    amp=numpy.convolve(amp,gaussain_filter,'same')
+    noise=amp.mean()
     while 1:
-        for i in range(0,rate-1):                   #rate
+        for i in range(0,rate-1):
             data=record_proc.stdout.read(2)
-            a= ord(data[0])+ord(data[1])*256
+            a=ord(data[0])+ord(data[1])*256
             if a>32767:
                 a=a-65536
             amp[i]=a
-        amp = numpy.abs(amp)
-        #@print('noise level:',amp.mean(),"\n")
-    ##noise level evaluation endis
-        noise = amp.mean()
-        while 1:
-            for i in range(0,rate-1):               #rate
-                data=record_proc.stdout.read(2)
-                #record in buffer
-                a= ord(data[0])+ord(data[1])*256
-                if a>32767:
-                    a=a-65536
-                amp[i]=a
-            amp = numpy.abs(amp)
-            #@print('noise level:',amp.mean(),';voice:',a)
-            if amp.mean()>open_factor*noise:                  #threshold
-                print('start:noise:',noise,'voice:',amp.mean())
-                #write buffer into file
-                th=numpy.zeros((rate,))          #rate
-                silent=0
-    ##start capture voice
-                while silent<300:    
-                    for i in range(0,rate-1):       #rate
-                        data=record_proc.stdout.read(2)
-                        byte_buffer[j]=data[0]    #v_queue.write(data) #v_queue.put(data)           #f.write(data)
-                        byte_buffer[j+1]=data[1]
-                        j=j+2
-                        if (j>=bufsize):
-                            j=0
-                            v_queue.put(byte_buffer)
-                        a= ord(data[0])+ord(data[1])*256
-                        if a>32767:
-                            a=a-65536
-                        th[i]=a
-                    th = numpy.abs(th)
-                    if th.mean()<(open_factor+1)*noise:           #threshold
-                        #@print(silent,':noise:',noise,';','threshold:',th.mean())
-                        noise=(noise+th.mean())/2
-                        silent=silent+1
-                    else:
-                        silent=0
-                print('ends','noise:',noise,';th:',th.mean())
-                v_queue.put(byte_buffer[:j])
-                j = 0
-                break
-            else:
-                break
+        amp=numpy.abs(amp)
+        amp=numpy.convolve(amp,gaussain_filter,'same')
+        if amp.mean()>open_factor*noise:
+            print("Start!   noise:{}    voice:{}    factor:{}".format(noise,amp.mean(),open_factor))
+            amp=numpy.zeros((rate,))
+            silent=0
+            while silent<200:    
+                for i in range(0,rate-1):
+                    data=record_proc.stdout.read(2)
+                    byte_buffer[j]=data[0]
+                    byte_buffer[j+1]=data[1]
+                    j=j+2
+                    if (j>=bufsize):
+                        j=0
+                        v_queue.put(byte_buffer)
+                    a=ord(data[0])+ord(data[1])*256
+                    if a>32767:
+                        a=a-65536
+                    amp[i]=a
+                amp=numpy.abs(amp)
+                amp=numpy.convolve(amp,gaussain_filter,'same')
+                if amp.mean()<(open_factor+1)*noise:
+                    noise=0.6*noise+0.4*amp.mean()
+                    silent=silent+1
+                else:
+                    silent=0
+            print("Ends!    noise:{}    voice:{}    factor:{}".format(noise,amp.mean(),open_factor))
+            v_queue.put(byte_buffer[:j])
+            j = 0
+        else:
+            noise=0.6*noise+0.4*amp.mean()
+            #print("Ends!    noise:{}    voice:{}    factor:{}".format(noise,amp.mean(),open_factor))
