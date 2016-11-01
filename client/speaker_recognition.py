@@ -13,7 +13,7 @@ import time
 
 RECORD_KHZ = 8 #kHZ
 INTERVAL = 1000 #mili
-SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s'
+SPEECH_ADD_URL = 'http://edison-api.belugon.com/speechAdd?speaker=%s&timestamp=%d'
 CMD_MFCC = '/usr/local/bin/x2x +sf | /usr/local/bin/frame | /usr/local/bin/mfcc -s %d' % RECORD_KHZ
 CMD_ENROLL = '/usr/local/bin/gmm -l 12'
 CMD_PREDICT = '/usr/local/bin/gmmp -a -l 12 %s'
@@ -90,6 +90,8 @@ def process_predict_live():
     while True:
         buf = voice_data_queue.get()
         n = len(buf)
+        if  n < INPUT_BUF_SIZE:
+            continue
         p = subprocess.Popen([CMD_MFCC], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         mfcc_thread = Thread(target=get_mfcc_result, args=[p.stdout, mfcc_result_queue])
         mfcc_thread.start()
@@ -128,7 +130,8 @@ def find_best_gmm_match(mfcc_data):
     return best_match_name
 
 def send_result(name):
-    request_url = SPEECH_ADD_URL % name
+    timestamp = time.time()
+    request_url = SPEECH_ADD_URL % (name,timestamp)
     response_json = urllib2.urlopen(request_url)
 
 def get_mfcc_result(out,result_queue):
