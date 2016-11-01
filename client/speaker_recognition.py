@@ -90,8 +90,6 @@ def process_predict_live():
     while True:
         buf = voice_data_queue.get()
         n = len(buf)
-        if  n < INPUT_BUF_SIZE:
-            continue
         p = subprocess.Popen([CMD_MFCC], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         mfcc_thread = Thread(target=get_mfcc_result, args=[p.stdout, mfcc_result_queue])
         mfcc_thread.start()
