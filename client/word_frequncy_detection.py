@@ -6,23 +6,23 @@ import Queue import Queue, Empty
 import subrecord
 import sys
 
+INTERVAL = 7000 #7s
 RECORD_KHZ = 8
 INPUT_BUF_SIZE = (INTERVAL / 1000) * RECORD_KHZ * 1000 * 16 / 8
 
 def main():
-    if len(sys.argv) != 1:
-        print("Please type in at leasr one word for detection")
+    if len(sys.argv) != 2:
+        print("Please type in at exactly one word for detection")
         sys.exit(0)
     else:
         word_frequency_detection(sys.argv[1])
 
 
 def word_frequency_detection(word_to_detect):
-    TOTAL_WORD_COUNT = 0
+    TOTAL_WORD_COUNT = 0  #Count the number of appreance in the text
     voice_data_queue = Queue()
     #Acquire voice clip for speech detection
     voice_capture_thread = Thread(target=subrecord.voice_capture, args=[math.floor(RECORD_KHZ *1000), INPUT_BUF_SIZE, voice_data_queue])
-
     voice_capture_thread.start()
 
 
