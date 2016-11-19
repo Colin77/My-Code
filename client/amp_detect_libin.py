@@ -55,7 +55,7 @@ for i in range(0, 5):
     get_volume()
 for i in range(0, 5):
     noisevector[i] = get_volume()
-noise = noisevector.mean()*1.1
+noise = noisevector.mean()
 print("Offset noise: {}".format(noise))
 
 while 1:
