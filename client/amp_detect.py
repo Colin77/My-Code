@@ -8,7 +8,7 @@ import sys
 inrate=int(8000);
 rate_str="-r"+str(inrate)
     
-record_proc = subprocess.Popen(["arecord","-fS16_LE","-c1","-twav",rate_str],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+record_proc = subprocess.Popen(["arecord","-fS16_LE","-c1","-traw",rate_str],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
 rate=int(inrate/1)
 
@@ -18,7 +18,7 @@ gaussain_filter=[0.006,0.061,0.242,0.383,0.242,0.061,0.006]
 
 amp=numpy.zeros((rate,))
 #th=numpy.zeros((rate,))
-f=open('test1.txt','wb')
+f=open('test4.txt','wb')
 #f.write(record_proc.stdout.read(1))
 for i in range(0,rate-1):
     data = record_proc.stdout.read(2)
