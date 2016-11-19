@@ -4,6 +4,7 @@ import numpy as np
 import time
 import os
 import sys
+from datetime import datetime
 
 gaussain_filter=[0.006,0.061,0.242,0.383,0.242,0.061,0.006]
 class RingFilter():
@@ -54,12 +55,12 @@ for i in range(0, 5):
     get_volume()
 for i in range(0, 5):
     noisevector[i] = get_volume()
-noise = noisevector.mean()
+noise = noisevector.mean()*1.1
 print("Offset noise: {}".format(noise))
 
 while 1:
     v_lower = max((get_volume() - noise), 0)
     v = int(round(min(v_lower, 10) * 255 / 10))
-    print("voice{}".format(v))
-    #f.write('%.2f' % amp.mean())
+    print("%s,%d" % (str(datetime.utcnow()),v))
+    f.write('%s,%d' % (str(datetime.utcnow()),v))
     #f.write('\n')
