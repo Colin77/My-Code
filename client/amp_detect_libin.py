@@ -21,7 +21,7 @@ class RingFilter():
         for i in range(0,7):
             x_index = (self.index + (7 - i)) % 7
             s += self.data[x_index] * filt[i]
-        return s;
+        return 20*np.log10(s);
 
 
 inrate=int(8000);
@@ -59,7 +59,7 @@ print("Offset noise: {}".format(noise))
 
 while 1:
     v_lower = max((get_volume() - noise), 0)
-    v = int(round(min(v_lower, 100) * 255 / 100))
+    v = int(round(min(v_lower, 10) * 255 / 10))
     print("voice{}".format(v))
     #f.write('%.2f' % amp.mean())
     #f.write('\n')
