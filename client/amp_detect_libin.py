@@ -33,7 +33,7 @@ record_proc = subprocess.Popen(["arecord","-fS16_LE","-c1","-twav",rate_str],std
 rate=int(inrate/1)
 
 #th=numpy.zeros((rate,))
-f=open('test1.txt','wb')
+f=open('test.txt','wb')
 #f.write(record_proc.stdout.read(1))
 
 ring_filter = RingFilter()
@@ -62,5 +62,5 @@ while 1:
     v_lower = max((get_volume() - noise), 0)
     v = int(round(min(v_lower, 10) * 255 / 10))
     print("%s,%d" % (str(datetime.utcnow()),v))
-    f.write('%s,%d' % (str(datetime.utcnow()),v))
+    f.write('%s,%d\n' % (str(datetime.utcnow()),v))
     #f.write('\n')
