@@ -3,8 +3,8 @@ import sys
 from decimal import Decimal
 #sys.arg[1] = more_final_train.net
 #sys.arg[2] = test_data.txt
-ann = libfann.neural_net()
-ann.create_from_file(sys.argv[1])
+ann = libfann.neural_net()  #Establish testing net
+ann.create_from_file(sys.argv[1]) #Feed the train parameter(from .net file) to the testing net
 with open(sys.argv[2], 'r') as test_file:
   for line in test_file:
     string_list = line.split('')
