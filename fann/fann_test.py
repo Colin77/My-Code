@@ -1,8 +1,9 @@
 from fann2 import libfann
 import sys
 from decimal import Decimal
-
-ann - libfann.neural_net()
+#sys.arg[1] = more_final_train.net
+#sys.arg[2] = test_data.txt
+ann = libfann.neural_net()
 ann.create_from_file(sys.argv[1])
 with open(sys.argv[2], 'r') as test_file:
   for line in test_file:
@@ -12,6 +13,7 @@ with open(sys.argv[2], 'r') as test_file:
     test_list[1] = Decimal(string_list[1])
     test_list[2] = Decimal(string_list[2])
     #Get original FANN result
+    #Use ann.run(amp1, amp2, amp3)for predict result
     result_list = ann.run([test_list[0], test_list[1], test_list[2]])
     
     if result_list[0] > 0.5:
