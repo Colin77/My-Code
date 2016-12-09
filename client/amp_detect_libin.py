@@ -10,7 +10,7 @@ from Queue import Queue,Empty
 from threading import Thread
 
 AMP_ADD_URL = 'http://edison-api.belugon.com/voiceAmpAdd?device=%s&timestamp=%f&amplitude=%d'
-dev_id = 1
+dev_id = 'position1'
 gaussain_filter=[0.006,0.061,0.242,0.383,0.242,0.061,0.006]
 class RingFilter():
     def __init__(self):
@@ -61,13 +61,17 @@ def send_result_queue(device_id, result_queue):
             try:
                 d = result_queue.get(timeout=1)
                 request_url = AMP_ADD_URL % (device_id, d[0], d[1])
-                urllib2.urlopen(request_url)
+                Thread(target=async_req, args=[request_url]).start()
+                #urllib2.urlopen(request_url)
                 dt = datetime.utcfromtimestamp(d[0])
                 print("%s,%d" % (str(dt),d[1]))
                 f.write('%s,%d\n' % (str(dt),d[1]))
             except Empty:
                 pass
     print("exit thread")
+
+def async_req(url):
+    urllib2.urlopen(url)
 
 noisevector = np.zeros(5)
 for i in range(0, 5):
