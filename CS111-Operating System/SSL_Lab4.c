@@ -32,6 +32,7 @@ struct sockaddr_in serv_addr;
 struct hostent *server;
 char received_buffer[256];
 char send_buffer[256];
+SSL* ssl;
 
 //log file
 FILE* log_file_fd;
@@ -62,7 +63,6 @@ int main(int argc, char*argv[])
 
 	const SSL_METHOD* method;
 	SSL_CTX* ctx;
-	SSL* ssl;
 	X509* cert = NULL;
 	X509_NAME* certname = NULL;
 
@@ -210,7 +210,7 @@ void* send_data()
 			fprintf(log_file_fd, "%s %0.1f\n", time_buffer, real_temp);
 			fflush(log_file_fd);
 			//Sending data to server
-			n = write(client_socket_fd, send_buffer, sizeof(send_buffer));
+			n = SSL_write(ssl, send_buffer, sizeof(send_buffer));
 			printf("Finished writing data: %s\n",send_buffer);
 			if(n<0){
 				perror("Error on writing");
@@ -228,7 +228,7 @@ void* receive_data()
 	int n;
 	while(on_flag){
 		memset(received_buffer, 0, 256);
-		n = read(client_socket_fd, received_buffer, sizeof(received_buffer));
+		n = SSL_read(ssl, received_buffer, sizeof(received_buffer));
 		if(n<0){
 			perror("Error on reading from server");
 			exit(EXIT_FAILURE);
